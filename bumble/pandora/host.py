@@ -65,6 +65,7 @@ from pandora.host_pb2 import (
     ConnectResponse,
     DataTypes,
     DisconnectRequest,
+    DiscoverabilityMode,
     InquiryResponse,
     PrimaryPhy,
     ReadLocalAddressResponse,
@@ -734,6 +735,18 @@ class HostService(HostServicer):
                     dt.manufacturer_specific_data,
                 )
             )
+
+        flag_map = {
+            DiscoverabilityMode.NOT_DISCOVERABLE: AdvertisingData.BR_EDR_NOT_SUPPORTED_FLAG,  # type: ignore
+            DiscoverabilityMode.DISCOVERABLE_LIMITED: AdvertisingData.LE_LIMITED_DISCOVERABLE_MODE_FLAG,  # type: ignore
+            DiscoverabilityMode.DISCOVERABLE_GENERAL: AdvertisingData.LE_GENERAL_DISCOVERABLE_MODE_FLAG,  # type: ignore
+        }
+
+        if dt.le_discoverability_mode:
+            flags = flag_map.get(
+                dt.le_discoverability_mode, AdvertisingData.BR_EDR_NOT_SUPPORTED_FLAG
+            )
+            ad_structures.append((AdvertisingData.FLAGS, flags.to_bytes()))
 
         return AdvertisingData(ad_structures)
 
