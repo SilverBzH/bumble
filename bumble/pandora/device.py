@@ -34,6 +34,8 @@ from bumble.sdp import (
 )
 from typing import Any, Dict, List, Optional
 
+import logging
+
 
 # Default rootcanal HCI TCP address
 ROOTCANAL_HCI_ADDRESS = "localhost:6402"
@@ -68,15 +70,21 @@ class PandoraDevice:
         return self._hci is None
 
     async def open(self) -> None:
+        logging.error(f"[{self.device.random_address}] - open")
         if self._hci is not None:
             return
 
         # open HCI transport & set device host.
+        logging.error(f"[{self.device.random_address}] - open transport")
         self._hci = await transport.open_transport(self._hci_name)
+
+        logging.error(f"[{self.device.random_address}] - create host")
         self.device.host = Host(controller_source=self._hci.source, controller_sink=self._hci.sink)  # type: ignore[no-untyped-call]
 
         # power-on.
+        logging.error(f"[{self.device.random_address}] - power on")
         await self.device.power_on()
+        logging.error(f"[{self.device.random_address}] - powered on")
 
     async def close(self) -> None:
         if self._hci is None:

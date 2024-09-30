@@ -35,6 +35,8 @@ from pandora.security_grpc_aio import (
 )
 from typing import Callable, List, Optional
 
+import logging
+
 # public symbols
 __all__ = [
     'register_servicer_hook',
@@ -66,9 +68,11 @@ async def serve(
 
     try:
         while True:
+            logging.error(f"CHARLIE load server config")
             # load server config from dict.
             config.load_from_dict(bumble.config.get('server', {}))
 
+            logging.error(f"CHARLIE add pandora services")
             # add Pandora services to the gRPC server.
             add_HostServicer_to_server(
                 HostService(server, bumble.device, config), server
@@ -81,23 +85,29 @@ async def serve(
             )
             add_L2CAPServicer_to_server(L2CAPService(bumble.device, config), server)
 
+            logging.error(f"CHARLIE add hooks services")
             # call hooks if any.
             for hook in _SERVICERS_HOOKS:
                 hook(bumble, config, server)
 
+            logging.error(f"CHARLIE open bumble")
             # open device.
             await bumble.open()
             try:
+                logging.error(f"CHARLIE doing some stuff")
                 # Pandora require classic devices to be discoverable & connectable.
                 if bumble.device.classic_enabled:
                     await bumble.device.set_discoverable(True)
                     await bumble.device.set_connectable(True)
 
                 # start & serve gRPC server.
+                logging.error(f"CHARLIE start grpc server")
                 await server.start()
+                logging.error(f"CHARLIE wait for termination")
                 await server.wait_for_termination()
             finally:
                 # close device.
+                logging.error(f"CHARLIE close Bumble")
                 await bumble.close()
 
             # re-initialize the gRPC server.
